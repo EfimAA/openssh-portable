@@ -1,4 +1,4 @@
-name: Trivy Security Scanner 
+name: Trivy Security Scanner
 
 on:
   push:
@@ -6,35 +6,28 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-    inputs:
-      severity:
-        description: 'Минимальный уровень уязвимостей'
-        required: true
-        default: 'HIGH'
-        type: choice
-        options:
-        - HIGH
-        - CRITICAL
 
 jobs:
   security-check:
-    name: Проверка безопасности
+    name: Security Scan
     runs-on: ubuntu-latest
     
     steps:
-      - name:  Получение кода
+      - name: Clone OpenSSH Repository
         uses: actions/checkout@v4
-
-      - name:  Запуск Trivy
+        with:
+          repository: openssh/openssh-portable
+          
+      - name: Run Trivy Scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'table'
           exit-code: '1'
-          severity: ${{ github.event.inputs.severity || 'HIGH,CRITICAL' }}
+          severity: 'HIGH,CRITICAL'
 
-      - name:  Сохранение результатов
+      - name: Save Results
         if: always()
         run: |
-          echo "Сканирование завершено $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "Scan completed at $(date)" >> $GITHUB_STEP_SUMMARY
