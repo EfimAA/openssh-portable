@@ -1,31 +1,67 @@
-name: OpenSSH Security Scanner
+name: OpenSSH Source Code Security Scan
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
-  security-check:
+  source-scan:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout OpenSSH code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           repository: openssh/openssh-portable
       
-      - name: Run Trivy scan
+      - name: Setup Trivy
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'table'
-          exit-code: '1'  
-          severity: 'HIGH'
-          scanners: 'vuln'  # Только уязвимости, без секретов
+          exit-code: '0'
+          severity: 'HIGH,CRITICAL'
+      
+      - name: Scan OpenSSH source code
+        id: sourcescan
+        run: |
+          echo "Начинаем сканирование исходного кода OpenSSH..."
+          
+          mkdir -p ./scan-reports
+          
+          if trivy fs --security-checks vuln,secret --severity HIGH,CRITICAL --exit-code 1 .; then
+            echo "HIGH_VULNS=false" >> $GITHUB_ENV
+            echo "Высоких уязвимостей не обнаружено"
+          else
+            echo "HIGH_VULNS=true" >> $GITHUB_ENV
+            echo "Обнаружены высокие уязвимости!"
+            trivy fs --security-checks vuln,secret --severity HIGH,CRITICAL . > ./scan-reports/detailed-report.txt
+            exit 1
+          fi
+      
+      - name: Generate comprehensive report
+        if: always()
+        run: |
+          echo "Создание полного отчета о безопасности..."
+          trivy fs --format json --output ./scan-reports/full-report.json .
+          echo "Отчет сохранен для анализа"
       
       - name: Save scan results
         if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openssh-security-scan
+          path: ./scan-reports/
+          retention-days: 7
+      
+      - name: Scan summary
+        if: always()
         run: |
-          echo "Scan completed at $(date)" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ env.HIGH_VULNS }}" == "true" ]; then
+            echo "Сканирование завершено с ошибкой - обнаружены высокие уязвимости"
+            echo "Проверьте отчет для получения подробной информации"
+          else
+            echo "Сканирование успешно завершено - высоких уязвимостей не обнаружено"
+          fi
