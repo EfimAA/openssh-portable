@@ -1,35 +1,31 @@
-name: Trivy Security Scanner
+name: OpenSSH Security Scanner
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
     branches: [ main ]
   workflow_dispatch:
 
 jobs:
   security-check:
-    name: Security Scan
     runs-on: ubuntu-latest
     
     steps:
-      - name: Clone OpenSSH Repository
+      - name: Checkout OpenSSH code
         uses: actions/checkout@v4
         with:
           repository: openssh/openssh-portable
-          
-      - name: Run Trivy Vulnerability Scan
+      
+      - name: Run Trivy scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'table'
-          exit-code: '1'
+          exit-code: '1'  
           severity: 'HIGH'
-          ignore-unfixed: true
-          scanners: 'vuln' 
-
-      - name: Save Results
+          scanners: 'vuln'  # Только уязвимости, без секретов
+      
+      - name: Save scan results
         if: always()
         run: |
-          echo "Vulnerability scan completed at $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "Scan completed at $(date)" >> $GITHUB_STEP_SUMMARY
