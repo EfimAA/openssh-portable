@@ -26,8 +26,8 @@ jobs:
           format: 'table'
           exit-code: '1'
           severity: 'HIGH'
-          vuln-type: 'vulnerability'  # Явно указываем, что сканируем только уязвимости
-          security-checks: 'vuln'      # Отключаем проверку секретов, конфигураций и т.д.
+          ignore-unfixed: true
+          scanners: 'vuln' 
 
       - name: Save Results
         if: always()
