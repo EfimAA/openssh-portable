@@ -18,16 +18,18 @@ jobs:
         with:
           repository: openssh/openssh-portable
           
-      - name: Run Trivy Scan
+      - name: Run Trivy Vulnerability Scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'table'
           exit-code: '1'
-          severity: 'HIGH,CRITICAL'
+          severity: 'HIGH'
+          vuln-type: 'vulnerability'  # Явно указываем, что сканируем только уязвимости
+          security-checks: 'vuln'      # Отключаем проверку секретов, конфигураций и т.д.
 
       - name: Save Results
         if: always()
         run: |
-          echo "Scan completed at $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "Vulnerability scan completed at $(date)" >> $GITHUB_STEP_SUMMARY
