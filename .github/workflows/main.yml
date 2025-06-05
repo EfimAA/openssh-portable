@@ -1,4 +1,4 @@
-name: Trivy Security Scanner
+name: Trivy Security Scanner 
 
 on:
   push:
@@ -22,19 +22,19 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: 📥 Получение кода
+      - name:  Получение кода
         uses: actions/checkout@v4
 
-      - name: Запуск Trivy
+      - name:  Запуск Trivy
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'table'
           exit-code: '1'
-          severity: '${{ github.event.inputs.severity || "HIGH,CRITICAL" }}'
+          severity: ${{ github.event.inputs.severity || 'HIGH,CRITICAL' }}
 
-      - name: Сохранение результатов
+      - name:  Сохранение результатов
         if: always()
         run: |
           echo "Сканирование завершено $(date)" >> $GITHUB_STEP_SUMMARY
